@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body style="min-height: 100vh; padding-top: 50px;">
+
+    <div id="overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.5); z-index: 1040;"></div>
+
+    <div class="container my-6">
+        <h2>User Management</h2>
+        <br/><br/>
+        <a href="{{ url_for('add_user_page') }}" class="btn btn-primary">Add New User</a>
+    </div>
+
+    <div class="container my-5">
+        
+        <form action="/" method="get" class="my-4">
+            <h4 class="text-center d-inline">Search User</h4>
+            <input type="text" name="query" class="form-control d-inline ms-2" style="width: 25ch;" placeholder="Search by username" value="{{ query }}">
+            <button type="submit" class="btn btn-primary mt-3">Search</button>
+        </form>
+
+        {% if users %}
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if users %}
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user }}</td>
+                            <td>
+                                <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#updateExpiryModal" data-username="{{ user }}" data-expiry="{{ expiry }}">Update Expiry</button>
+                                <button class="btn btn-warning btn-sm" onclick="confirmResetPassword('{{ user }}')">Reset Password</button>
+                                <a href="{{ url_for('add_user_dataset', username=user) }}" class="btn btn-info btn-sm">Add Dataset</a>
+                                 </td>
+                        </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No Users found</p>
+        {% endif %}
+
+    </div>
+
+   <!-- Update Expiry Modal -->
+   <div class="modal fade" id="updateExpiryModal" tabindex="-1" aria-labelledby="updateExpiryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateExpiryModalLabel">Update Expiry Date</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="updateExpiryForm">
+                <div class="modal-body">
+                    <input type="hidden" name="username" id="expiry-username">
+                    <div class="mb-3">
+                        <label for="expiry-date" class="form-label">Current Expiry Date</label>
+                        <input type="date" class="form-control" id="expiry-date" name="expiry_date">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Password Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">Password Changed</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="newPassword" class="bg-light p-2" style="cursor: text;"></p>
+                <p id="newUserlink" class="bg-light p-2" style="cursor: text;"></p>
+                <p>IMPORTANT: Please copy it as it won't be displayed again.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var updateExpiryModal = document.getElementById('updateExpiryModal');
+    updateExpiryModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget;
+        var username = button.getAttribute('data-username');
+        var modalUsernameInput = updateExpiryModal.querySelector('#expiry-username');
+        var modalExpiryInput = updateExpiryModal.querySelector('#expiry-date');
+        
+        // Set the username in the form
+        modalUsernameInput.value = username;
+        
+        // Fetch expiry from backend
+        fetch(`/get_user_expiry?username=${username}`)
+            .then(response => response.json())
+            .then(data => {
+                // Populate the expiry date field
+                modalExpiryInput.value = data.expiry;
+            })
+            .catch(error => console.error('Error fetching expiry:', error));
+    });
+
+    // Handle the form submission for updating expiry
+    document.getElementById('updateExpiryForm').onsubmit = function(event) {
+        event.preventDefault(); // Prevent the default form submission
+        
+        var formData = new FormData(this);
+        fetch('/update_user_expiry', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Expiry date updated successfully!');
+                var modal = bootstrap.Modal.getInstance(updateExpiryModal);
+                modal.hide(); // Hide the modal after success
+                location.reload(); // Optionally reload to refresh data on the page
+            } else {
+                alert('Failed to update expiry date.');
+            }
+        })
+        .catch(error => console.error('Error updating expiry:', error));
+    };
+
+    // Reset Password with Confirmation
+    function confirmResetPassword(username) {
+        if (confirm("Are you sure you want to reset the password for " + username + "?")) {
+            document.getElementById('overlay').style.display = 'block';
+            fetch(`/reset_password?username=${username}`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('newPassword').innerText = "New Password:\n" + data.password;
+                    document.getElementById('newUserlink').innerText = "New User Link:\n" + data.userlink;
+                    var passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+                    passwordModal.show();
+                } else {
+                    alert("Error: Failed to reset password.");
+                }
+                hideOverlay();
+            })
+            .catch(error => {
+                console.error('Error resetting password:', error);
+                hideOverlay();                
+            });
+        }
+    }
+
+    function hideOverlay() {
+        document.getElementById('overlay').style.display = 'none';
+    }
+
+</script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

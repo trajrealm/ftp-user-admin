@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update User</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <h2 class="text-center">Add Dataset, user: {{ user.username }}</h2>
+        <br/><br/>
+        <form action="/update/{{ user.username }}" method="post" onsubmit="disableButtons();">
+            <div class="row mb-3">
+                <label for="username" class="col-sm-2 col-form-label" style="font-weight: bold;">Username</label>
+                <div class="col-sm-5">
+                    <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" readonly>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <label for="expiry" class="col-sm-2 col-form-label" style="font-weight: bold;">Expiry Date</label>
+                <div class="col-sm-2">
+                    <input type="date" id="expiry" name="expiry" class="form-control" value="{{ user.expiry }}" readonly>
+                </div>
+            </div>
+
+            <br/>
+            <div class="mb-3">
+                <label class="form-label" style="font-weight: bold; text-decoration: underline;">Datasets</label>
+                <div class="row">
+                    {% for dataset in datasets %}
+                        <div class="col-md-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="datasets" value="{{ dataset }}" {% if dataset in user.datasets %} checked disabled {% endif %}>
+                                <label class="form-check-label">{{ dataset }}</label>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <br/>
+            <div class="mb-3">
+                <label for="datasets" class="form-label" style="font-weight: bold; text-decoration: underline;">Associated Files</label>
+                <div class=""row>
+                    <ul class="list-unstyled">
+                        {% for filelink in user.filenames %}
+                            <li class="mb-2">
+                                <span class="text-success">&#10003;</span> {{ filelink }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="saveChangesBtn">Save Changes</button>
+            <a href="/" class="btn btn-secondary" id="cancelBtn">Cancel</a> <!-- Added Cancel Button -->
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+<script>
+    function disableButtons() {
+        const createUserBtn = document.getElementById('saveChangesBtn');
+        createUserBtn.disabled = true;
+        createUserBtn.innerText = 'Updating...';
+
+        const cancelBtn = document.getElementById('cancelBtn');
+        cancelBtn.classList.add('disabled')
+        cancelBtn.onclick = function() {return false; };
+    }
+</script>
+</html>

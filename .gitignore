@@ -1,0 +1,6 @@
+conf/*.py
+**/__pycache__
+tmp/*
+!tmp/temp.txt
+data/*
+!data/example.csv
