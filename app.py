@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, Response
+from functools import wraps
 
 import remote_cmds as rmtcmd
 import conf.app_config as app_config
@@ -8,6 +9,33 @@ import datasets_service as dsservice
 
 app = Flask(__name__)
 
+USERNAME = app_config.BASIC_AUTH[0]
+PASSWORD = app_config.BASIC_AUTH[1]
+
+def check_auth(username, password):
+    return username == USERNAME and password == PASSWORD
+
+def authenticate():
+    return Response(
+        "Access Denied: Please provide valid credentials",
+        401,
+        {"WWW-Authenticate": 'Basic realm="Login Required"'}
+    )
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
+# Apply the authentication decorator to all routes
+@app.before_request
+@requires_auth
+def secure_all_routes():
+    pass
 
 @app.route('/get_user_expiry', methods=['GET'])
 def get_user_expiry():
