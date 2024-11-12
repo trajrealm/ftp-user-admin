@@ -41,7 +41,9 @@
                                 <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#updateExpiryModal" data-username="{{ user }}" data-expiry="{{ expiry }}">Update Expiry</button>
                                 <button class="btn btn-warning btn-sm" onclick="confirmResetPassword('{{ user }}')">Reset Password</button>
                                 <a href="{{ url_for('add_user_dataset', username=user) }}" class="btn btn-info btn-sm">Add Dataset</a>
-                                 </td>
+                                <a href="{{ url_for('add_user_files', username=user) }}" class="btn btn-info btn-sm">Add Files</a>
+                                <a href="{{ url_for('edit_home', username=user) }}" class="btn btn-info btn-sm">Edit Home Page</a>
+                            </td>
                         </tr>
                     {% endfor %}
                 {% endif %}

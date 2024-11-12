@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Home Page </title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container my-5">
+        <h2>Edit Home Page for user: {{ user.username }}</h2>
+        <h2>Edit Home Page</h2>
+        {% if success %}
+            <div class="alert alert-success">Successfully saved!</div>
+        {% endif %}
+        
+        <!-- Text area to display and edit raw HTML -->
+        <form id="editForm" action="/save_homepage_content" method="post">
+            <input type="hidden" name="username" value="{{ user.username }}"> <!-- Pass username -->
+            <div class="form-group">
+                <textarea id="htmlContent" name="htmlContent" class="form-control" rows="25">{{ content }}</textarea>
+            </div>
+            
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a href="/" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

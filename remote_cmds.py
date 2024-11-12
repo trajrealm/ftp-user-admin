@@ -7,6 +7,7 @@ import index_file_service as homefile
 import conf.app_config as app_config
 
 
+
 ROOT_CMD = f"ssh -i {app_config.PEM_LOC} {app_config.SSH_USERNAME}@{app_config.REMOTE_HOST} "
 
 def create_user(username, expiry):
@@ -155,4 +156,44 @@ def download_index_file(username):
     os.system(cmd)
 
 
+def list_histpack_files(filepath):
+    cmd = f'sudo find {filepath} -type f -name "*.zip" -not -path "*/.*/*"'
+    full_cmd = ROOT_CMD + f"'{cmd}'"
+    print(full_cmd)
+    output = os.popen(full_cmd).read()
+    file_list = output.strip().split("\n")
+    file_list.sort()
+    return file_list
+    
 
+def create_symlinks_for_files(username, filepaths):
+    for file in filepaths:
+        hist_subdir = get_user_hitorical_subdir_path(username)
+        cmd = f"sudo su - {username} -c \"ln -s {file} {hist_subdir}\""
+        full_cmd = ROOT_CMD + f"'{cmd}'"
+        print(full_cmd)
+        os.system(full_cmd)
+
+
+def scp_edited_index_file_to_remote(username):
+    cmd = f"scp -p -i {app_config.PEM_LOC} tmp/index_e.html {app_config.SSH_USERNAME}@{app_config.REMOTE_HOST}:/home/{app_config.SSH_USERNAME}/index_e.html"
+    err = os.system(cmd)
+
+    hist_subdir = get_user_hitorical_subdir_path(username)
+    cmd = f"sudo mv /home/{app_config.SSH_USERNAME}/index_e.html {hist_subdir}"
+    full_cmd = ROOT_CMD + cmd
+    os.system(full_cmd)
+    change_owner(username)
+
+    current_timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")[:-3]
+    cmd = f"sudo su - {username} -c \"mv {hist_subdir}/index.html {hist_subdir}/index.html.{current_timestamp} \""
+    full_cmd = ROOT_CMD + f"'{cmd}'"
+    os.system(full_cmd)
+
+    cmd = f"sudo su - {username} -c \"mv {hist_subdir}/index_e.html {hist_subdir}/index.html \""
+    full_cmd = ROOT_CMD + f"'{cmd}'"
+    os.system(full_cmd)
+
+    if err:
+        print(err)
+        raise Exception(err)

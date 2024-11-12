@@ -26,6 +26,22 @@ def get_dataset_reverse_map():
     return datasetmap
 
 
+def get_dataset_files_paths():
+    dataset_map = dict()
+    with open(app_config.DATA_LINKS_CSV_FILEPATH, 'r') as file:
+        reader = csv.reader(file)
+        next(reader)
+        for row in reader:
+            if 'nosedol' in row[2]:
+                path  = '/'.join(row[2].split('/')[:-2]) + '/'
+            else:
+                path = '/'.join(row[2].split('/')[:-1]) + '/'
+
+            dataset_map[row[0]] = path
+    return dataset_map
+
+
 def parse_dataset(filename):
     prefix = "_".join(filename.split("_")[:-2])
     return prefix
+
